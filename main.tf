@@ -1,4 +1,4 @@
-module "CLOUDFRONT" {
+module "VPC" {
   source = "./modules/VPC"
 
   aws_region     = var.aws_region
