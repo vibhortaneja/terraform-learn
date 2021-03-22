@@ -1,5 +1,5 @@
 # VPC
-resource "aws_vpc" "vibhor_vpc" {
+resource "aws_vpc" "test_vpc" {
   cidr_block       = var.vpc_cidr
   tags = {
     Name = "VibhorVPC"
@@ -7,39 +7,59 @@ resource "aws_vpc" "vibhor_vpc" {
 }
 
 # Internet Gateway
-resource "aws_internet_gateway" "vibhor_igw" {
-  vpc_id = aws_vpc.vibhor_vpc.id
+resource "aws_internet_gateway" "test_igw" {
+  vpc_id = aws_vpc.test_vpc.id
   tags = {
-    Name = "main"
+    Name = "test_internet_gateway"
   }
 }
 
-# Subnets : public
-resource "aws_subnet" "public" {
-  count = length(var.subnets_cidr)
-  vpc_id = aws_vpc.vibhor_vpc.id
-  cidr_block = element(var.subnets_cidr,count.index)
-  availability_zone = element(var.azs,count.index)
-  tags = {
-    Name = "Subnet-${count.index+1}"
-  }
+resource "aws_subnet" "eks_public" {
+  for_each = var.subnets_cidr_public
+
+  vpc_id = aws_vpc.test_vpc.id
+  cidr_block = each.value.cidr
+  availability_zone = each.value.az
+  tags = each.value.tags
 }
 
-# Route table: attach Internet Gateway
+// Create private subnets dedicated to all AWS resources, excluding EKS
+resource "aws_subnet" "eks_private" {
+  for_each = var.subnets_cidr_private
+
+  vpc_id = aws_vpc.test_vpc.id
+  cidr_block = each.value.cidr
+  availability_zone = each.value.az
+  tags = each.value.tags
+}
+
+# Route table public: attach Internet Gateway
 resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.vibhor_vpc.id
+  vpc_id = aws_vpc.test_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.vibhor_igw.id
+    gateway_id = aws_internet_gateway.test_igw.id
   }
   tags = {
     Name = "publicRouteTable"
   }
 }
 
+# Route table private: attach nat Gateway
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.test_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.test_igw.id
+  }
+  tags = {
+    Name = "privateRouteTable"
+  }
+}
+
 # Route table association with public subnets
-resource "aws_route_table_association" "a" {
-  count = length(var.subnets_cidr)
-  subnet_id      = element(aws_subnet.public.*.id,count.index)
+resource "aws_route_table_association" "rt_association-public" {
+  for_each       = aws_subnet.eks_public
+  subnet_id      = each.value.id
   route_table_id = aws_route_table.public_rt.id
 }
