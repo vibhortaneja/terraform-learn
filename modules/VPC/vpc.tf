@@ -45,12 +45,30 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
+resource "aws_eip" "nat" {
+  vpc              = true
+  count = length(var.subnets_cidr_private)
+  public_ipv4_pool = "amazon"
+}
+
+resource "aws_nat_gateway" "gw" {
+  count         = length(var.subnets_cidr_private)
+  allocation_id = element(aws_eip.nat.id, count.index)
+  subnet_id     = element(aws_subnet.eks_public.id, count.index)
+  depends_on    = [aws_internet_gateway.test_igw]
+
+  tags = {
+    Name = "eks-nat_Gateway-${count.index + 1}"
+  }
+}
+
 # Route table private: attach nat Gateway
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.test_vpc.id
+  count = length(var.subnets_cidr_private)
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.test_igw.id
+    gateway_id = element(aws_nat_gateway.gw.*.id, count.index)
   }
   tags = {
     Name = "privateRouteTable"
@@ -63,3 +81,11 @@ resource "aws_route_table_association" "rt_association-public" {
   subnet_id      = each.value.id
   route_table_id = aws_route_table.public_rt.id
 }
+
+# Route table association with public subnets
+resource "aws_route_table_association" "rt_association-private" {
+  count          = length(var.subnets_cidr_private)
+  subnet_id      = element(aws_subnet.eks_private.*.id, count.index)
+  route_table_id = element(aws_route_table.private_rt.*.id, count.index)
+}
+
