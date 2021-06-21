@@ -52,7 +52,7 @@ resource "aws_eip" "test_eip_for_nat" {
 #### create NAT gateway ####
 resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.test_eip_for_nat.id
-  subnet_id     = aws_subnet.subnet_private[0].id
+  subnet_id     = aws_subnet.subnet_private.id
 }
 
 # Route table private: attach nat Gateway

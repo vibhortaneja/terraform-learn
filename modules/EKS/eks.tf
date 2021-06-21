@@ -1,19 +1,19 @@
 #Creating a eks cluster
 resource "aws_eks_cluster" "eks_cluster" {
-  name = "test_eks"
+  name     = "test_eks"
   role_arn = aws_iam_role.eks_cluster_role.arn
   enabled_cluster_log_types = [
     "api",
     "audit",
     "authenticator",
     "controllerManager",
-    "scheduler"]
+  "scheduler"]
 
   # Defining on which VPC this cluster would run
   vpc_config {
-    subnet_ids = var.private_subnets
+    subnet_ids              = var.private_subnets
     endpoint_private_access = true
-    endpoint_public_access = true
+    endpoint_public_access  = true
   }
 
   timeouts {
@@ -28,10 +28,10 @@ resource "aws_eks_cluster" "eks_cluster" {
 
 #Role to attach on cluster
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "test-cluster-role"
-  description = "Allow cluster to manage node groups, fargate nodes and cloudwatch logs"
+  name                  = "test-cluster-role"
+  description           = "Allow cluster to manage node groups, fargate nodes and cloudwatch logs"
   force_detach_policies = true
-  assume_role_policy = <<POLICY
+  assume_role_policy    = <<POLICY
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -52,16 +52,16 @@ POLICY
 #Policy  Attachment
 resource "aws_iam_role_policy_attachment" "AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role = aws_iam_role.eks_cluster_role.name
+  role       = aws_iam_role.eks_cluster_role.name
 }
 resource "aws_iam_role_policy_attachment" "AmazonEKSVPCResourceController" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  role = aws_iam_role.eks_cluster_role.name
+  role       = aws_iam_role.eks_cluster_role.name
 }
 
 #Creating a new Policy for Cloudwatch Logs
 resource "aws_iam_policy" "AmazonEKSClusterCloudWatchMetricsPolicy" {
-  name = "AmazonEKSClusterCloudWatchMetricsPolicy"
+  name   = "AmazonEKSClusterCloudWatchMetricsPolicy"
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -80,12 +80,12 @@ EOF
 #Attaching the policy for cloudwatch
 resource "aws_iam_role_policy_attachment" "AmazonEKSCloudWatchMetricsPolicy" {
   policy_arn = aws_iam_policy.AmazonEKSClusterCloudWatchMetricsPolicy.arn
-  role = aws_iam_role.eks_cluster_role.name
+  role       = aws_iam_role.eks_cluster_role.name
 }
 
 #Defining The cloudwatch logs configuration
 resource "aws_cloudwatch_log_group" "cloudwatch_log_group" {
-  name = "/aws/eks/test/cluster"
+  name              = "/aws/eks/test/cluster"
   retention_in_days = 30
   tags = {
     Name = "test-eks-cloudwatch-log-group"
@@ -105,7 +105,7 @@ resource "aws_eks_node_group" "eks_node_group" {
     min_size     = 2
   }
 
-  instance_types  = [var.eks_node_group_instance_types]
+  instance_types = [var.eks_node_group_instance_types]
   depends_on = [
     aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
     aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy,
@@ -157,16 +157,16 @@ resource "aws_eks_fargate_profile" "eks_fargate" {
   }
 
   timeouts {
-    create   = "30m"
-    delete   = "30m"
+    create = "30m"
+    delete = "30m"
   }
 }
 
 resource "aws_iam_role" "eks_fargate_role" {
-  name = "test-fargate_cluster_role"
-  description = "Allow fargate cluster to allocate resources for running pods"
+  name                  = "test-fargate_cluster_role"
+  description           = "Allow fargate cluster to allocate resources for running pods"
   force_detach_policies = true
-  assume_role_policy = <<POLICY
+  assume_role_policy    = <<POLICY
 {
   "Version": "2012-10-17",
   "Statement": [

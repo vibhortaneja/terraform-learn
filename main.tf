@@ -1,8 +1,8 @@
 module "VPC" {
   source = "./modules/VPC"
 
-  vpc_cidr = var.vpc_cidr
-  subnets_cidr_public = var.subnets_cidr_public
+  vpc_cidr             = var.vpc_cidr
+  subnets_cidr_public  = var.subnets_cidr_public
   subnets_cidr_private = var.subnets_cidr_private
 }
 

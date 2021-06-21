@@ -5,7 +5,7 @@
 
 variable "private_subnets" {
   description = "Private subnets of VPC"
-  type = list(string)
+  type        = list(string)
 }
 
 variable "eks_node_group_instance_types" {
