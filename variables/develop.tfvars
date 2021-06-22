@@ -7,7 +7,7 @@ subnets_cidr_public = {
     "cidr" = "10.20.1.0/24",
     "az"   = "eu-west-1a",
     "tags" = {
-      "subnet_type" = "public"
+      "subnet_type" = "public-1"
     }
   },
   "public2" = {
@@ -15,7 +15,7 @@ subnets_cidr_public = {
     "cidr" = "10.20.2.0/24",
     "az"   = "eu-west-1b",
     "tags" = {
-      "subnet_type" = "public"
+      "subnet_type" = "public-2"
     }
   }
 }
@@ -26,7 +26,7 @@ subnets_cidr_private = {
     "cidr" = "10.20.3.0/24",
     "az"   = "eu-west-1a",
     "tags" = {
-      "subnet_type" = "private"
+      "subnet_type" = "private-1"
     }
   },
   "private2" = {
@@ -34,7 +34,7 @@ subnets_cidr_private = {
     "cidr" = "10.20.4.0/24",
     "az"   = "eu-west-1b",
     "tags" = {
-      "subnet_type" = "private"
+      "subnet_type" = "private-2"
     }
   }
 }

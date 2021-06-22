@@ -17,6 +17,12 @@ resource "aws_subnet" "subnet_public" {
   vpc_id            = aws_vpc.test_vpc.id
   cidr_block        = each.value.cidr
   availability_zone = each.value.az
+  tags = merge(
+    each.value.tags,
+    {
+      Name = each.value.name
+    }
+  )
 
 }
 
@@ -27,6 +33,12 @@ resource "aws_subnet" "subnet_private" {
   vpc_id            = aws_vpc.test_vpc.id
   cidr_block        = each.value.cidr
   availability_zone = each.value.az
+  tags = merge(
+    each.value.tags,
+    {
+      Name = each.value.name
+    }
+  )
 }
 
 # Route table public: attach Internet Gateway
@@ -42,8 +54,8 @@ resource "aws_route_table" "public_rt" {
 }
 
 resource "aws_eip" "test_eip_for_nat" {
-  vpc = true
-
+  vpc        = true
+  depends_on = [aws_internet_gateway.test_igw]
   tags = {
     Name = "test_eip"
   }
@@ -52,7 +64,8 @@ resource "aws_eip" "test_eip_for_nat" {
 #### create NAT gateway ####
 resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.test_eip_for_nat.id
-  subnet_id     = aws_subnet.subnet_private.id
+  subnet_id     = element(values(aws_subnet.subnet_public)[*].id, 0)
+  depends_on    = [aws_internet_gateway.test_igw]
 }
 
 # Route table private: attach nat Gateway
