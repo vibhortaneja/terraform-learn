@@ -5,7 +5,7 @@ resource "aws_kms_key" "wordpress" {
   enable_key_rotation     = true
   is_enabled              = true
   policy                  = data.aws_iam_policy_document.kms.json
-  tags                    = {
+  tags = {
     Name = "KMS-key Wordpress"
   }
 }
@@ -19,7 +19,7 @@ resource "aws_efs_file_system" "wordpress" {
   creation_token = "wordpress"
   encrypted      = true
   kms_key_id     = aws_kms_key.wordpress.arn
-  tags                    = {
+  tags = {
     Name = "File System Wordpress"
   }
 }
