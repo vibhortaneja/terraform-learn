@@ -41,6 +41,3 @@ subnets_cidr_private = {
 
 ssm_name_rds_pwd  = "/wordpress/rds/pwd"
 ssm_name_rds_user = "/wordpress/rds/username"
-
-public_alb_domain = "wordpress.com"
-site_domain       = "vibhor.wordpress.com"
