@@ -27,3 +27,13 @@ output "rds_endpoint" {
   description = "rds_endpoint"
   value       = aws_rds_cluster.test_wordpress.endpoint
 }
+
+output "db_name" {
+  description = "db_name"
+  value       = aws_rds_cluster.test_wordpress.database_name
+}
+
+output "db_username" {
+  description = "db_name"
+  value       = aws_rds_cluster.test_wordpress.master_username
+}

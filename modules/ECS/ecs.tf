@@ -1,5 +1,16 @@
+data "aws_region" "current" {}
+
+data "aws_caller_identity" "current" {}
 resource "aws_ecs_cluster" "wordpress" {
   name = "wordpress-cluster"
+  tags = {
+    Name = "wordpress"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "wordpress" {
+  name = "/ecs/wordpress"
+  retention_in_days = 14
   tags = {
     Name = "wordpress"
   }
@@ -10,75 +21,81 @@ resource "aws_ecs_task_definition" "wordpress" {
   container_definitions = templatefile(
     "${path.module}/template/wordpress.tpl",
     {
-      ecs_service_container_name = var.ecs_service_container_name
-      wordpress_db_host          = aws_rds_cluster.wordpress.endpoint
-      wordpress_db_user          = var.rds_cluster_master_username
-      wordpress_db_name          = var.rds_cluster_database_name
-      aws_region                 = data.aws_region.current.name
+      ecs_service_container_name = "wordpress"
+      wordpress_db_host          = var.rds_endpoint
+      wordpress_db_user          = var.rds_user
+      wordpress_db_name          = var.rds_dbname
+      aws_region                 = var.aws_region
       aws_logs_group             = aws_cloudwatch_log_group.wordpress.name
       aws_account_id             = data.aws_caller_identity.current.account_id
-      secret_name                = aws_secretsmanager_secret.wordpress.name
-      cloudwatch_log_group       = var.ecs_cloudwatch_logs_group_name
+      secret_name                = var.rds_password
+      cloudwatch_log_group       = aws_cloudwatch_log_group.wordpress.name
     }
   )
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_task_definition_cpu
-  memory                   = var.ecs_task_definition_memory
+  cpu                      = "1024"
+  memory                   = "2048"
   execution_role_arn       = aws_iam_role.ecs_task_role.arn
   volume {
     name = "efs-themes"
     efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.wordpress.id
+      file_system_id     = var.efs_id
       root_directory     = "/"
       transit_encryption = "ENABLED"
       authorization_config {
-        access_point_id = aws_efs_access_point.wordpress_themes.id
+        access_point_id = var.efs_access_point_theme
       }
     }
   }
   volume {
     name = "efs-plugins"
     efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.wordpress.id
+      file_system_id     = var.efs_id
       root_directory     = "/"
       transit_encryption = "ENABLED"
       authorization_config {
-        access_point_id = aws_efs_access_point.wordpress_plugins.id
+        access_point_id = var.efs_access_point_plugin
       }
     }
   }
-  tags = var.tags
+  tags = {
+    Name = "wordpress"
+  }
 }
 
 resource "aws_ecs_service" "wordpress" {
-  name             = var.ecs_service_name
+  name             = "wordpress"
   cluster          = aws_ecs_cluster.wordpress.arn
   task_definition  = aws_ecs_task_definition.wordpress.arn
-  desired_count    = var.ecs_service_desired_count
+  desired_count    = 2
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
   propagate_tags   = "SERVICE"
   network_configuration {
-    subnets          = var.ecs_service_subnet_ids
-    security_groups  = local.ecs_service_security_group_ids
+    subnets          = var.private_subnets_cidr
+    security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = var.ecs_service_assign_public_ip
   }
   load_balancer {
     target_group_arn = aws_lb_target_group.wordpress_http.arn
-    container_name   = var.ecs_service_container_name
+    container_name   = "wordpress"
     container_port   = "80"
   }
-  tags = var.tags
+  tags = {
+  Name = "wordpress"
+}
 }
 
 resource "aws_lb" "wordpress" {
-  name               = var.lb_name
-  internal           = var.lb_internal
+  name               = "wordpress_lb"
+  internal           = false
   load_balancer_type = "application"
-  security_groups    = local.lb_security_group_ids
-  subnets            = var.lb_subnet_ids
-  tags               = var.tags
+  security_groups    = [aws_security_group.alb-sg.id]
+  subnets            = var.public_subnets_cidr
+  tags = {
+    Name = "wordpress"
+  }
 }
 
 resource "aws_lb_listener" "wordpress_http" {
@@ -109,7 +126,7 @@ resource "aws_lb_target_group" "wordpress_http" {
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = data.aws_subnet.ecs_service_subnet_ids.vpc_id
+  vpc_id      = var.vpc_id
   health_check {
     matcher = "200-499"
   }
@@ -118,5 +135,7 @@ resource "aws_lb_target_group" "wordpress_http" {
     cookie_duration = 86400
     enabled         = true
   }
-  tags = var.tags
+  tags = {
+    Name = "wordpress"
+  }
 }

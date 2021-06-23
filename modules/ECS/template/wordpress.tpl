@@ -10,7 +10,7 @@
     ],
     "secrets": [{
       "name": "WORDPRESS_DB_PASSWORD",
-      "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_account_id}:secret:${secret_name}:WORDPRESS_DB_PASSWORD::"
+      "valueFrom": "${secret_name}"
     }],
     "environment": [
       {
