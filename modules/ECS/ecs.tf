@@ -6,9 +6,9 @@ resource "aws_ecs_cluster" "wordpress" {
 }
 
 resource "aws_ecs_task_definition" "wordpress" {
-  family = var.ecs_task_definition_family
+  family = "wordpress-task-defination"
   container_definitions = templatefile(
-    "${path.module}/wordpress.tpl",
+    "${path.module}/template/wordpress.tpl",
     {
       ecs_service_container_name = var.ecs_service_container_name
       wordpress_db_host          = aws_rds_cluster.wordpress.endpoint
