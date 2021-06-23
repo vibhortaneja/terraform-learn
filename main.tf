@@ -14,3 +14,9 @@ module "RDS" {
   vpc_id               = module.VPC.vpc_id
   private_subnets_cidr = module.VPC.private_subnets_cidr
 }
+
+module "EFS"{
+  source = "./modules/EFS"
+  vpc_id               = module.VPC.vpc_id
+  private_subnets_cidr = module.VPC.private_subnets_cidr
+}
