@@ -9,7 +9,7 @@ resource "aws_ecs_cluster" "wordpress" {
 }
 
 resource "aws_cloudwatch_log_group" "wordpress" {
-  name = "/ecs/wordpress"
+  name              = "/ecs/wordpress"
   retention_in_days = 14
   tags = {
     Name = "wordpress"
@@ -83,12 +83,12 @@ resource "aws_ecs_service" "wordpress" {
     container_port   = "80"
   }
   tags = {
-  Name = "wordpress"
-}
+    Name = "wordpress"
+  }
 }
 
 resource "aws_lb" "wordpress" {
-  name               = "wordpress_lb"
+  name               = "wordpress-lb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb-sg.id]
