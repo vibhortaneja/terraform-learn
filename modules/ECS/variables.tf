@@ -93,3 +93,8 @@ variable "ecs_service_assign_public_ip" {
   type        = bool
   default     = false
 }
+
+locals {
+  account_id         = data.aws_caller_identity.current.account_id
+  ecs_autoscale_role = "arn:aws:iam::${local.account_id}:role/ecsAutoscaleRoles"
+}

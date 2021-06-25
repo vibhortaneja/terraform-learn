@@ -1,14 +1,15 @@
 data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
-resource "aws_ecs_cluster" "wordpress" {
+
+resource "aws_ecs_cluster" "wordpress-cluster" {
   name = "wordpress-cluster"
   tags = {
     Name = "wordpress"
   }
 }
 
-resource "aws_cloudwatch_log_group" "wordpress" {
+resource "aws_cloudwatch_log_group" "wordpress-log-group" {
   name              = "/ecs/wordpress"
   retention_in_days = 14
   tags = {
@@ -16,7 +17,7 @@ resource "aws_cloudwatch_log_group" "wordpress" {
   }
 }
 
-resource "aws_ecs_task_definition" "wordpress" {
+resource "aws_ecs_task_definition" "wordpress-task-definition" {
   family = "wordpress-task-defination"
   container_definitions = templatefile(
     "${path.module}/template/wordpress.tpl",
@@ -26,10 +27,10 @@ resource "aws_ecs_task_definition" "wordpress" {
       wordpress_db_user          = var.rds_user
       wordpress_db_name          = var.rds_dbname
       aws_region                 = var.aws_region
-      aws_logs_group             = aws_cloudwatch_log_group.wordpress.name
+      aws_logs_group             = aws_cloudwatch_log_group.wordpress-log-group.name
       aws_account_id             = data.aws_caller_identity.current.account_id
       secret_name                = var.rds_password
-      cloudwatch_log_group       = aws_cloudwatch_log_group.wordpress.name
+      cloudwatch_log_group       = aws_cloudwatch_log_group.wordpress-log-group.name
     }
   )
   network_mode             = "awsvpc"
@@ -64,10 +65,10 @@ resource "aws_ecs_task_definition" "wordpress" {
   }
 }
 
-resource "aws_ecs_service" "wordpress" {
+resource "aws_ecs_service" "wordpress-service" {
   name             = "wordpress"
-  cluster          = aws_ecs_cluster.wordpress.arn
-  task_definition  = aws_ecs_task_definition.wordpress.arn
+  cluster          = aws_ecs_cluster.wordpress-cluster.arn
+  task_definition  = aws_ecs_task_definition.wordpress-task-definition.arn
   desired_count    = 2
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
